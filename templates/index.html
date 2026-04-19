@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHS Admissions Visualization | COMP4037 CW2</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+    :root {
+        --bg: #0d1117;
+        --bg2: #161b22;
+        --bg3: #21262d;
+        --border: #30363d;
+        --text: #e6edf3;
+        --text-muted: #8b949e;
+        --text-dim: #484f58;
+        --accent: #00ff88;
+        --dash-bg: #0a0f1e;
+        --dash-border: #1e2d4a;
+        --dash-sidebar: #111827;
+        --dash-text-dim: #64748b;
+        --dash-text-muted: #475569;
+        --dash-label: #94a3b8;
+        --dash-cell-empty: #0d1424;
+        --dash-detail-bg: #111827;
+        --dash-stat-bg: #0d1424;
+        --dash-text-bright: #e2e8f0;
+    }
+    body.light-mode {
+        --bg: #f6f8fa;
+        --bg2: #ffffff;
+        --bg3: #eaeef2;
+        --border: #d0d7de;
+        --text: #1f2328;
+        --text-muted: #57606a;
+        --text-dim: #8c959f;
+        --accent: #1a7f37;
+        --dash-bg: #f0f4f8;
+        --dash-border: #d0d7de;
+        --dash-sidebar: #ffffff;
+        --dash-text-dim: #57606a;
+        --dash-text-muted: #6b7280;
+        --dash-label: #374151;
+        --dash-cell-empty: #e5e7eb;
+        --dash-detail-bg: #ffffff;
+        --dash-stat-bg: #f3f4f6;
+        --dash-text-bright: #1f2328;
+    }
+
+    * {
+        margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+    }
+
+    /* NAVBAR — fixed top, full width */
+    nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 1000;
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+    }
+
+    .nav-brand {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: -0.3px;
+    }
+
+    .nav-brand span {
+        color: #8b949e;
+        font-weight: 400;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+        color: var(--text);
+        background: var(--bg3);
+        border-color: var(--border);
+    }
+
+    .nav-links a.active {
+        color: #00ff88;
+        border-color: #00ff88;
+    }
+
+    /* Push content below fixed navbar */
+    .page-content {
+        margin-top: 60px;
+    }
+
+    /* HERO SECTION */
+    .hero {
+        padding: 80px 48px 60px;
+        background: linear-gradient(
+            135deg,
+            var(--bg) 0%,
+            var(--bg2) 50%,
+            var(--bg) 100%
+        );
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(0,255,136,0.1);
+        border: 1px solid rgba(0,255,136,0.3);
+        color: #00ff88;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 20px;
+        margin-bottom: 24px;
+    }
+
+    .hero h1 {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.25;
+        max-width: 800px;
+        margin: 0 auto 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .hero h1 span {
+        color: #00ff88;
+    }
+
+    .hero-subtitle {
+        font-size: 16px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto 48px;
+    }
+
+    /* STATS ROW — 5 stat boxes */
+    .stats-grid {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .stat-box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 28px;
+        text-align: center;
+        min-width: 150px;
+        transition: border-color 0.2s;
+    }
+
+    .stat-box:hover {
+        border-color: #00ff88;
+    }
+
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: #00ff88;
+        letter-spacing: -1px;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* SECTIONS */
+    .chart-section {
+        padding: 80px 48px;
+        border-bottom: 1px solid var(--border);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .section-number {
+        font-size: 12px;
+        font-weight: 600;
+        color: #00ff88;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+    }
+
+    .section-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.4px;
+        margin-bottom: 8px;
+    }
+
+    .section-desc {
+        font-size: 15px;
+        color: var(--text-muted);
+        max-width: 750px;
+        margin-bottom: 32px;
+        line-height: 1.7;
+    }
+
+    /* CHART CONTAINER */
+    .chart-container {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px;
+        overflow: hidden;
+    }
+
+    /* Loading skeleton shown before JS chart renders */
+    .chart-loading {
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        color: #30363d;
+    }
+    .chart-loading-spinner {
+        width: 32px; height: 32px;
+        border: 3px solid #1e2d4a;
+        border-top-color: #00ff9f;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .chart-loading-text { font-size: 13px; color: #30363d; letter-spacing: 0.5px; }
+
+    /* chart containers with JS content: let Plotly size itself */
+    .chart-container[id] {
+        overflow: visible;
+    }
+
+    /* INSIGHT BOX */
+    .insight-box {
+        margin-top: 24px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-left: 4px solid #00ff88;
+        border-radius: 0 8px 8px 0;
+        padding: 18px 24px;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .insight-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #00ff88;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .insight-text {
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.65;
+    }
+
+    .insight-text strong {
+        color: #00ff88;
+    }
+
+    /* BACKLOG ALERT BOX */
+    .alert-box {
+        margin-top: 24px;
+        background: rgba(248,81,73,0.08);
+        border: 1px solid rgba(248,81,73,0.3);
+        border-left: 4px solid #f85149;
+        border-radius: 0 8px 8px 0;
+        padding: 18px 24px;
+    }
+
+    .alert-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #f85149;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .alert-text {
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.65;
+    }
+
+    /* FOOTER */
+    footer {
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        padding: 40px 48px;
+        text-align: center;
+    }
+
+    footer p {
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 2;
+    }
+
+    footer a {
+        color: #58a6ff;
+        text-decoration: none;
+    }
+
+    footer a:hover {
+        text-decoration: underline;
+    }
+
+    .footer-note {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--text-dim);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       CHART 1 — INTERACTIVE RECOVERY DASHBOARD
+    ═══════════════════════════════════════════════════════ */
+    #recovery-dashboard {
+        display: flex;
+        background: var(--dash-bg);
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        overflow: hidden;
+        height: 700px;
+        position: relative;
+    }
+
+    /* ── Sidebar ─────────────────────────────── */
+    #filters-sidebar {
+        width: 210px;
+        min-width: 210px;
+        background: var(--dash-sidebar);
+        border-right: 1px solid var(--dash-border);
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s ease, min-width 0.3s ease;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    #filters-sidebar.collapsed { width: 46px; min-width: 46px; }
+
+    .sidebar-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 14px 10px;
+        border-bottom: 1px solid var(--dash-border);
+        flex-shrink: 0;
+    }
+    /* Collapsed: remove horizontal padding so the 22px button fits in 46px */
+    #filters-sidebar.collapsed .sidebar-top {
+        padding: 14px 12px 10px;
+        justify-content: center;
+    }
+    .sidebar-heading {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+        transition: opacity 0.2s;
+    }
+    #filters-sidebar.collapsed .sidebar-heading { display: none; }
+
+    .sidebar-toggle {
+        background: none;
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text-dim);
+        cursor: pointer;
+        border-radius: 4px;
+        width: 22px;
+        height: 22px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: color 0.2s, border-color 0.2s;
+    }
+    .sidebar-toggle:hover { color: #00ff9f; border-color: #00ff9f; }
+
+    .filters-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px;
+        transition: opacity 0.2s;
+    }
+    #filters-sidebar.collapsed .filters-scroll { opacity: 0; pointer-events: none; }
+
+    .filter-group { margin-bottom: 20px; }
+    .filter-group-title {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--dash-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .filter-option {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 5px;
+        cursor: pointer;
+    }
+    .filter-option input { accent-color: #00ff9f; cursor: pointer; flex-shrink: 0; }
+    .filter-option span {
+        font-size: 11.5px;
+        color: var(--dash-label);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+    .filter-sep {
+        height: 1px;
+        background: var(--dash-border);
+        margin: 16px 0;
+    }
+    .year-range-wrap { padding: 2px 0; }
+    .year-range-row { display: flex; gap: 6px; align-items: center; }
+    .year-range-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .year-range-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+    }
+    .year-range-labels span { font-size: 10px; color: var(--dash-text-muted); }
+
+    .reset-btn {
+        width: 100%;
+        background: transparent;
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text-dim);
+        padding: 7px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        margin-top: 4px;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    .reset-btn:hover { border-color: #00ff9f; color: #00ff9f; }
+
+    /* ── Main panel ──────────────────────────── */
+    #heatmap-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    #heatmap-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--dash-border);
+        flex-shrink: 0;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .legend-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .legend-gradient {
+        width: 100px;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(to right, #0d1b2a 0%, #1a3a5c 30%, #d97706 55%, #059669 80%, #00ff9f 100%);
+    }
+    .legend-label { font-size: 10px; color: var(--dash-text-muted); }
+    .border-legend {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        color: var(--dash-text-muted);
+    }
+    .border-swatch {
+        width: 28px;
+        height: 10px;
+        border-radius: 2px;
+        background: var(--dash-bg);
+        box-shadow: inset 0 0 0 2px #d97706;
+    }
+    .toolbar-count {
+        font-size: 11px;
+        color: var(--dash-text-muted);
+    }
+    #visible-count { color: var(--dash-label); font-weight: 600; }
+
+    .download-btn {
+        background: var(--dash-bg);
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text-dim);
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .download-btn:hover { border-color: #00ff9f; color: #00ff9f; }
+
+    /* Year header row */
+    #year-header-row {
+        display: flex;
+        align-items: center;
+        padding: 6px 16px 4px;
+        border-bottom: 1px solid var(--dash-border);
+        flex-shrink: 0;
+    }
+    .yaxis-label-spacer { flex: 0 0 200px; }
+    #year-cols-header { display: flex; flex: 1; gap: 2px; }
+    .yr-col-hdr {
+        flex: 1;
+        text-align: center;
+        font-size: 10.5px;
+        color: var(--dash-text-muted);
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .trap-col-hdr {
+        flex: 0 0 42px;
+        text-align: center;
+        font-size: 9.5px;
+        color: var(--dash-text-muted);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    /* Scrollable grid */
+    #heatmap-grid-wrap {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 8px 16px 16px;
+    }
+    #heatmap-grid-wrap::-webkit-scrollbar { width: 4px; }
+    #heatmap-grid-wrap::-webkit-scrollbar-track { background: var(--dash-bg); }
+    #heatmap-grid-wrap::-webkit-scrollbar-thumb { background: var(--dash-border); border-radius: 2px; }
+
+    .hm-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2px;
+        transition: opacity 0.25s ease;
+    }
+    .hm-row.hidden { display: none; }
+
+    .hm-row-label {
+        flex: 0 0 200px;
+        font-size: 11px;
+        color: var(--dash-text-dim);
+        padding-right: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        transition: color 0.15s;
+        letter-spacing: -0.1px;
+    }
+    .hm-row-label:hover { color: #00ff9f; }
+
+    .hm-cells { display: flex; flex: 1; gap: 2px; }
+
+    .hm-cell {
+        flex: 1;
+        height: 34px;
+        border-radius: 3px;
+        position: relative;
+        cursor: pointer;
+        overflow: visible;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+    .hm-cell:hover {
+        transform: scaleY(1.25);
+        z-index: 20;
+        filter: brightness(1.25);
+    }
+    .hm-cell-inner {
+        position: absolute;
+        inset: 0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .hm-cell .spark-svg {
+        position: absolute;
+        bottom: 1px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 55%;
+        pointer-events: none;
+    }
+
+    .trap-cell {
+        flex: 0 0 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .trap-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* ── Tooltip ─────────────────────────────── */
+    #hm-tooltip {
+        position: fixed;
+        background: var(--dash-sidebar);
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+        padding: 13px 16px;
+        font-size: 12px;
+        color: var(--dash-text-bright);
+        pointer-events: none;
+        z-index: 9000;
+        display: none;
+        max-width: 290px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    }
+    #hm-tooltip .tt-head {
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 9px;
+        font-size: 12.5px;
+        line-height: 1.3;
+    }
+    #hm-tooltip .tt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 5px;
+    }
+    #hm-tooltip .tt-lbl { color: var(--dash-text-muted); font-size: 11px; }
+    #hm-tooltip .tt-val { font-weight: 600; font-size: 12px; color: var(--dash-text-bright); }
+    #hm-tooltip .tt-divider {
+        height: 1px;
+        background: var(--dash-border);
+        margin: 7px 0;
+    }
+
+    /* ── Detail side panel ───────────────────── */
+    #detail-panel {
+        position: absolute;
+        right: 0; top: 0; bottom: 0;
+        width: 360px;
+        background: var(--dash-detail-bg);
+        border-left: 1px solid var(--dash-border);
+        transform: translateX(100%);
+        transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 18px 16px;
+        overflow: hidden;
+    }
+    #detail-panel.open { transform: translateX(0); }
+
+    #detail-close {
+        position: absolute;
+        top: 12px; right: 12px;
+        background: none;
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text-dim);
+        width: 26px; height: 26px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    #detail-close:hover { color: #e2e8f0; border-color: #94a3b8; }
+
+    #detail-cat-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dash-text-bright);
+        padding-right: 32px;
+        line-height: 1.35;
+        margin-bottom: 3px;
+    }
+    #detail-cat-meta {
+        font-size: 11px;
+        color: var(--dash-text-muted);
+        margin-bottom: 14px;
+    }
+    #detail-cat-meta .meta-trap {
+        color: #f59e0b;
+        font-weight: 600;
+    }
+    #detail-plotly-wrap {
+        flex: 1;
+        min-height: 0;
+    }
+    #detail-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .detail-stat-box {
+        background: var(--dash-stat-bg);
+        border: 1px solid var(--dash-border);
+        border-radius: 6px;
+        padding: 8px 10px;
+    }
+    .detail-stat-label {
+        font-size: 9.5px;
+        color: var(--dash-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        display: block;
+        margin-bottom: 3px;
+    }
+    .detail-stat-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--dash-text-bright);
+    }
+    </style>
+
+    <!-- Plotly CDN (used by all 5 charts + detail panel) -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+    <!-- html2canvas — enables Export PNG on Chart 1 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav>
+    <div class="nav-brand">
+        NHS Admissions Viz <span>| COMP4037 CW2</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#matrix">Matrix Chart</a></li>
+        <li><a href="#parcoords">Parallel Coordinates</a></li>
+        <li><a href="#treemap">Treemap</a></li>
+        <li><a href="#radar">Radar Chart</a></li>
+        <li><a href="#scatter">Scatterplot Matrix</a></li>
+        <li><a href="#supplementary">&#9888; Backlog Analysis</a></li>
+    </ul>
+    <button id="theme-toggle" title="Toggle light/dark mode" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;border-radius:6px;padding:5px 10px;font-size:13px;font-family:inherit;transition:all 0.2s;margin-left:12px;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">&#9788; Light</button>
+</nav>
+
+<div class="page-content">
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge">COMP4037 Research Methods · CW2</div>
+    <h1>NHS Hospital Admissions:<br>
+    <span>Post-Pandemic Recovery Analysis</span></h1>
+    <p class="hero-subtitle">
+        26 years of NHS England hospital admissions data (1998–2024),
+        visualized to reveal which diagnosis categories remain
+        trapped in the post-COVID backlog.
+    </p>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-number">{{ stats.years }}</span>
+            <span class="stat-label">Years of Data</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">{{ stats.categories }}</span>
+            <span class="stat-label">Diagnosis Categories</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">{{ stats.peak_admissions_label }}</span>
+            <span class="stat-label">Peak Year Admissions</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">{{ stats.backlog_count }}</span>
+            <span class="stat-label">Backlog-Trapped Categories</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">5</span>
+            <span class="stat-label">Advanced Chart Types</span>
+        </div>
+    </div>
+
+    <div style="margin-top:48px; max-width:720px; margin-left:auto; margin-right:auto; text-align:left; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px 28px;">
+        <div style="font-size:11px; font-weight:700; color:#58a6ff; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:10px;">About the Dataset</div>
+        <p style="font-size:14px; color:var(--text-muted); line-height:1.75; margin:0;">
+            This analysis draws on <strong style="color:var(--text);">NHS England Hospital Episode Statistics (HES)</strong> — the most comprehensive record of inpatient hospital care in England. The dataset covers <strong style="color:var(--text);">26 financial years from 1998–99 through 2023–24</strong>, recording every admitted patient episode across all NHS trusts. Each year's data is broken down by ICD-10 primary diagnosis, capturing finished admission episodes, emergency admissions, waiting list admissions, mean length of stay, and mean patient age. The <strong style="color:var(--text);">2018–19 financial year</strong> is used throughout as the pre-pandemic baseline. Data was obtained directly from the NHS England digital statistics portal and processed from 26 separate annual Excel releases.
+        </p>
+    </div>
+</section>
+
+<!-- SECTION 1: MATRIX CHART -->
+<section class="chart-section" id="matrix">
+    <div class="section-number">Chart 01 · Matrix Chart</div>
+    <h2 class="section-title">
+        Admissions Recovery Heatmap (2012–2024)
+    </h2>
+    <p class="section-desc">
+        Each cell shows the percentage change in hospital admissions
+        for a diagnosis category compared to the pre pandemic 2018-19
+        baseline. Red cells indicate categories where admissions remain
+        below baseline meaning fewer patients are being treated
+        than before COVID. Green cells show full or exceeded recovery.
+        The categories are sorted from worst recovery (top) to
+        best recovery (bottom).
+    </p>
+
+    <!-- ═══ INTERACTIVE RECOVERY DASHBOARD ═══ -->
+    <div id="recovery-dashboard">
+
+        <!-- Tooltip (fixed, managed by JS) -->
+        <div id="hm-tooltip">
+            <div class="tt-head" id="tt-name"></div>
+            <div class="tt-row">
+                <span class="tt-lbl">Year</span>
+                <span class="tt-val" id="tt-year"></span>
+            </div>
+            <div class="tt-divider"></div>
+            <div class="tt-row">
+                <span class="tt-lbl">Admissions vs 2018-19</span>
+                <span class="tt-val" id="tt-pct-change"></span>
+            </div>
+            <div class="tt-row">
+                <span class="tt-lbl">Waiting list vs 2018-19</span>
+                <span class="tt-val" id="tt-pct-wait"></span>
+            </div>
+            <div class="tt-row">
+                <span class="tt-lbl">Admissions (absolute)</span>
+                <span class="tt-val" id="tt-admissions"></span>
+            </div>
+            <div class="tt-divider"></div>
+            <div class="tt-row">
+                <span class="tt-lbl">Backlog trapped</span>
+                <span class="tt-val" id="tt-trap"></span>
+            </div>
+        </div>
+
+        <!-- ── Filters sidebar ── -->
+        <div id="filters-sidebar">
+            <div class="sidebar-top">
+                <span class="sidebar-heading">Filters</span>
+                <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse">&#x276C;</button>
+            </div>
+            <div class="filters-scroll" id="filters-scroll">
+
+                <div class="filter-group">
+                    <span class="filter-group-title">Disease Group</span>
+                    <div id="sg-checkboxes"></div>
+                </div>
+
+                <div class="filter-sep"></div>
+
+                <div class="filter-group">
+                    <span class="filter-group-title">Recovery Status</span>
+                    <label class="filter-option">
+                        <input type="radio" name="rec-filter" value="all" checked>
+                        <span>Show all</span>
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="rec-filter" value="backlog">
+                        <span>Backlog trapped only</span>
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="rec-filter" value="recovered">
+                        <span>Recovered only (&ge;0%)</span>
+                    </label>
+                </div>
+
+                <div class="filter-sep"></div>
+
+                <div class="filter-group">
+                    <span class="filter-group-title">Year Range</span>
+                    <div class="year-range-wrap">
+                        <div class="year-range-row">
+                            <input type="range" id="yr-from" min="0" max="5" value="0" step="1">
+                        </div>
+                        <div class="year-range-row">
+                            <input type="range" id="yr-to"   min="0" max="5" value="5" step="1">
+                        </div>
+                        <div class="year-range-labels">
+                            <span id="yr-from-lbl">2018-19</span>
+                            <span id="yr-to-lbl">2023-24</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-sep"></div>
+                <div class="filter-group">
+                    <span class="filter-group-title">Mean Patient Age</span>
+                    <div class="year-range-wrap">
+                        <div class="year-range-row">
+                            <span style="font-size:10px;color:#475569;min-width:22px;">Min</span>
+                            <input type="range" id="age-min" min="0" max="90" value="0" step="5">
+                        </div>
+                        <div class="year-range-row">
+                            <span style="font-size:10px;color:#475569;min-width:22px;">Max</span>
+                            <input type="range" id="age-max" min="0" max="90" value="90" step="5">
+                        </div>
+                        <div class="year-range-labels">
+                            <span id="age-min-lbl">0 yrs</span>
+                            <span id="age-max-lbl">90+ yrs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="reset-btn" id="reset-filters">&#x21BA; Reset all filters</button>
+
+            </div>
+        </div>
+
+        <!-- ── Heatmap panel ── -->
+        <div id="heatmap-main">
+
+            <!-- Toolbar -->
+            <div id="heatmap-toolbar">
+                <div class="toolbar-left">
+                    <div class="legend-wrap">
+                        <span class="legend-label">Worst</span>
+                        <div class="legend-gradient"></div>
+                        <span class="legend-label">Recovered</span>
+                    </div>
+                    <div class="border-legend">
+                        <div class="border-swatch"></div>
+                        <span>Border = waiting list growth</span>
+                    </div>
+                    <span class="toolbar-count">
+                        <span id="visible-count">—</span> categories shown
+                    </span>
+                </div>
+                <button class="download-btn" id="download-btn">&#x2913; Export PNG</button>
+            </div>
+
+            <!-- Year column headers -->
+            <div id="year-header-row">
+                <div class="yaxis-label-spacer"></div>
+                <div id="year-cols-header"></div>
+                <div class="trap-col-hdr">Trap</div>
+            </div>
+
+            <!-- Scrollable rows -->
+            <div id="heatmap-grid-wrap">
+                <div id="heatmap-grid"></div>
+            </div>
+
+        </div>
+
+        <!-- ── Detail side panel ── -->
+        <div id="detail-panel">
+            <button id="detail-close">&#x2715;</button>
+            <div id="detail-cat-name">Select a category</div>
+            <div id="detail-cat-meta">Click any row label or cell</div>
+            <div id="detail-plotly-wrap">
+                <div id="detail-plotly" style="width:100%;height:100%;"></div>
+            </div>
+            <div id="detail-stats-grid"></div>
+        </div>
+
+    </div><!-- end #recovery-dashboard -->
+
+    <div class="alert-box">
+        <div class="alert-label">&#9888; Post-Pandemic Backlog Alert</div>
+        <p class="alert-text">
+            Categories showing red in 2022 and 2023 represent a
+            structural healthcare crisis — not a temporary disruption.
+            These conditions had fewer patients treated after COVID
+            while simultaneously accumulating longer waiting lists.
+            The most severely affected include circulatory disorders,
+            HIV disease, and certain injury categories, none of which
+            have returned to pre-pandemic admission levels by 2023-24.
+        </p>
+    </div>
+
+    <div class="insight-box">
+        <div>
+            <div class="insight-label">How to Read This Chart</div>
+            <p class="insight-text">
+                The 2018-19 column is your zero reference — all other
+                years show percentage change from that baseline.
+                <strong>Dark red in 2020-21</strong> shows the
+                COVID lockdown impact. <strong>Categories still
+                red in 2023-24</strong> are the ones that never
+                recovered. Hover over any cell to see the exact
+                percentage change for that category and year.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 2: PARALLEL COORDINATES -->
+<section class="chart-section" id="parcoords">
+    <div class="section-number">Chart 02 · Parallel Coordinates</div>
+    <h2 class="section-title">
+        Multi-Dimensional Category Profiles (2023-24)
+    </h2>
+    <p class="section-desc">
+        Each line represents one diagnosis category. The five vertical
+        axes simultaneously show: how much admissions changed from
+        baseline, how much waiting lists changed, the volume of
+        emergency admissions, average length of hospital stay, and
+        mean patient age. Line color reflects admissions recovery
+        — red lines are categories still below pre-pandemic baseline,
+        green lines have recovered. Drag any axis to filter and
+        isolate specific groups of categories.
+    </p>
+
+    <p style="font-size:12px; color:#58a6ff; margin-bottom:12px; padding:8px 12px; background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:6px; display:inline-block;">
+        &#128427; Drag along any vertical axis to filter lines — only matching categories stay highlighted. Click and drag a highlighted region to move it.
+    </p>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+        <button onclick="Plotly.downloadImage('c2-plot',{format:'png',filename:'nhs-parallel-coordinates',width:1200,height:650})" style="background:#161b22;border:1px solid #30363d;color:#8b949e;padding:5px 11px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff88';this.style.color='#00ff88'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">&#x2913; Export PNG</button>
+    </div>
+
+    <div class="chart-container" id="chart2-container">
+        <div class="chart-loading"><div class="chart-loading-spinner"></div><span class="chart-loading-text">Building chart…</span></div>
+    </div>
+
+    <div class="insight-box">
+        <div>
+            <div class="insight-label">Key Insight</div>
+            <p class="insight-text">
+                Categories with <strong>negative admissions change
+                AND positive waiting list change</strong> form the
+                backlog trap — visible as red lines that drop on the
+                first axis while rising on the second. This pattern
+                reveals where the NHS is treating fewer patients
+                than before COVID while accumulating more people
+                waiting for treatment simultaneously.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 3: TREEMAP -->
+<section class="chart-section" id="treemap">
+    <div class="section-number">Chart 03 · Treemap</div>
+    <h2 class="section-title">
+        Admissions Volume and Recovery by Category (2023-24)
+    </h2>
+    <p class="section-desc">
+        Rectangle size represents the total volume of hospital
+        admissions — larger rectangles are bigger burdens on the NHS.
+        Color shows post-pandemic recovery status: red means admissions
+        are still below the 2018-19 baseline, green means recovery
+        or growth. The hierarchy groups categories into five
+        broad disease domains. Click any super-group rectangle
+        to zoom into its sub-categories.
+    </p>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+        <button onclick="Plotly.downloadImage('c3-plot',{format:'png',filename:'nhs-treemap',width:1200,height:750})" style="background:#161b22;border:1px solid #30363d;color:#8b949e;padding:5px 11px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff88';this.style.color='#00ff88'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">&#x2913; Export PNG</button>
+    </div>
+
+    <div class="chart-container" id="chart3-container">
+        <div class="chart-loading"><div class="chart-loading-spinner"></div><span class="chart-loading-text">Building chart…</span></div>
+    </div>
+
+    <div class="insight-box">
+        <div>
+            <div class="insight-label">Key Insight</div>
+            <p class="insight-text">
+                The treemap reveals two dimensions at once.
+                <strong>Organ System Diseases dominate by volume</strong>
+                — circulatory, respiratory and digestive conditions
+                account for the largest rectangles. But within that
+                large footprint, several categories remain red in
+                2023-24, indicating high-volume conditions where
+                the NHS is still treating significantly fewer
+                patients than before the pandemic.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 4: RADAR CHART -->
+<section class="chart-section" id="radar">
+    <div class="section-number">Chart 04 · Radar Chart</div>
+    <h2 class="section-title">
+        Multi-Metric Profile of Top 8 Categories (2023-24)
+    </h2>
+    <p class="section-desc">
+        Each polygon represents one of the top 8 diagnosis categories
+        by total admissions volume. The five spokes show: total
+        admissions volume, emergency admission rate, waiting list
+        size, average length of hospital stay, and mean patient age
+        — all normalized to a 0-100 scale for fair comparison.
+        A larger polygon area indicates higher relative burden
+        across all dimensions combined.
+    </p>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+        <button onclick="Plotly.downloadImage('c4-plot',{format:'png',filename:'nhs-radar-chart',width:900,height:650})" style="background:#161b22;border:1px solid #30363d;color:#8b949e;padding:5px 11px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff88';this.style.color='#00ff88'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">&#x2913; Export PNG</button>
+    </div>
+
+    <div class="chart-container" id="chart4-container">
+        <div class="chart-loading"><div class="chart-loading-spinner"></div><span class="chart-loading-text">Building chart…</span></div>
+    </div>
+
+    <div class="insight-box">
+        <div>
+            <div class="insight-label">Key Insight</div>
+            <p class="insight-text">
+                Categories with <strong>high emergency rates but
+                low waiting list scores</strong> represent acute
+                conditions — patients arrive as emergencies and
+                bypass waiting lists. Categories with the
+                <strong>opposite profile</strong> — high waiting
+                list, low emergency — are elective conditions where
+                the backlog crisis is most severe, as patients wait
+                months or years for non-urgent treatment.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 5: SCATTERPLOT MATRIX -->
+<section class="chart-section" id="scatter">
+    <div class="section-number">Chart 05 · Scatterplot Matrix</div>
+    <h2 class="section-title">
+        Pairwise Metric Relationships (2023-24)
+    </h2>
+    <p class="section-desc">
+        Each cell in the matrix shows one NHS metric plotted against
+        another. This reveals correlations and patterns across the
+        five key variables: total admissions, emergency admissions,
+        waiting list size, average length of stay, and mean patient
+        age. Points are colored by disease category group.
+        Outliers — points far from the main cluster — identify
+        the most unusual categories worth investigating further.
+    </p>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+        <button onclick="Plotly.downloadImage('c5-plot',{format:'png',filename:'nhs-scatter-matrix',width:1100,height:800})" style="background:#161b22;border:1px solid #30363d;color:#8b949e;padding:5px 11px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff88';this.style.color='#00ff88'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">&#x2913; Export PNG</button>
+    </div>
+
+    <div class="chart-container" id="chart5-container">
+        <div class="chart-loading"><div class="chart-loading-spinner"></div><span class="chart-loading-text">Building chart…</span></div>
+    </div>
+
+    <div class="insight-box">
+        <div>
+            <div class="insight-label">Key Insight</div>
+            <p class="insight-text">
+                The relationship between <strong>total admissions
+                and emergency admissions</strong> is non-linear —
+                some high-volume categories have very low emergency
+                rates (planned/elective care), while some smaller
+                categories are almost entirely emergency-driven.
+                <strong>Mean age shows a positive correlation
+                with length of stay</strong> — older patient
+                populations tend to require longer hospital stays
+                across most disease categories.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SUPPLEMENTARY SECTION ═══════════════════════════════════════════════ -->
+<section class="chart-section" id="supplementary" style="max-width:none; border-bottom:none; background:var(--bg);">
+
+    <div style="max-width:1400px; margin:0 auto;">
+        <div class="section-number">Supplementary Analysis</div>
+        <h2 class="section-title">Backlog in Focus — Two Analytical Lenses</h2>
+        <p class="section-desc">
+            Two targeted views that directly interrogate the research question.
+            Each chart reveals a different dimension of the post-pandemic backlog crisis —
+            where it is, how large it is, and who it affects.
+            Both respond to the filters in Chart 01.
+        </p>
+
+        <!-- S1 — Backlog Quadrant ─────────────────────────── -->
+        <div style="margin-bottom:60px;">
+            <div class="section-number" style="margin-top:0;">Supplementary A</div>
+            <h3 class="section-title" style="font-size:20px;">
+                The Backlog Quadrant — Where Are the Gaps?
+            </h3>
+            <p class="section-desc" style="margin-bottom:20px;">
+                Every diagnosis category plotted by two axes: admissions change (x) and waiting list change (y)
+                versus the 2018-19 baseline. Categories in the <strong style="color:#ef4444">top-left quadrant</strong>
+                are in the backlog trap — treating fewer patients while accumulating longer queues.
+                Point size reflects admissions volume. Backlog-trapped categories are labelled.
+            </p>
+            <div class="chart-container">
+                <div id="supp1-div" style="width:100%;min-height:580px;"></div>
+            </div>
+            <div class="insight-box">
+                <div>
+                    <div class="insight-label">Reading the quadrant</div>
+                    <p class="insight-text">
+                        The <strong>vertical dashed line</strong> at x=0 is the admissions baseline —
+                        left of it means fewer patients treated. The <strong>horizontal line</strong> at y=0
+                        is the waiting list baseline — above it means more people waiting.
+                        Only categories in the <strong>top-left quadrant</strong> are structurally trapped.
+                        Categories in the bottom-right are fully recovered. Use the filters to isolate
+                        a single disease group and see where its conditions cluster.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- S3 — Age vs Recovery ────────────────────────────── -->
+        <div>
+            <div class="section-number" style="margin-top:0;">Supplementary B</div>
+            <h3 class="section-title" style="font-size:20px;">
+                Who Waits? — Patient Age vs Admissions Recovery
+            </h3>
+            <p class="section-desc" style="margin-bottom:20px;">
+                Each point is a diagnosis category. The x-axis is the mean age of its patients;
+                the y-axis is its admissions recovery. Backlog-trapped categories (amber diamonds)
+                reveal whether the crisis falls disproportionately on older or younger patient populations.
+            </p>
+            <div class="chart-container">
+                <div id="supp3-div" style="width:100%;min-height:520px;"></div>
+            </div>
+            <div class="insight-box">
+                <div>
+                    <div class="insight-label">Key Insight</div>
+                    <p class="insight-text">
+                        Conditions where the mean patient age clusters above 60 and recovery remains
+                        negative represent a compounding demographic risk — older populations who often
+                        have fewer alternative options for care and longer recovery times if treatment
+                        is delayed. <strong>Backlog-trapped categories skewing older
+                        deserve policy prioritisation.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+</div><!-- end page-content -->
+
+<!-- CONCLUSION SECTION -->
+<section style="padding:80px 48px; background:var(--bg); border-top:1px solid var(--border);">
+    <div style="max-width:860px; margin:0 auto;">
+        <div style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:2px; margin-bottom:12px;">Conclusion</div>
+        <h2 style="font-size:26px; font-weight:700; color:var(--text); letter-spacing:-0.4px; margin-bottom:20px;">What the Data Tells Us</h2>
+        <p style="font-size:15px; color:var(--text-muted); line-height:1.8; margin-bottom:16px;">
+            By 2023–24, most NHS diagnosis categories had broadly returned to or exceeded their pre-pandemic admission volumes. The COVID-19 crisis caused a sharp universal drop in 2020–21, but for the majority of conditions the healthcare system adapted and throughput recovered within two to three years. However, the aggregate picture conceals a structurally important minority.
+        </p>
+        <p style="font-size:15px; color:var(--text-muted); line-height:1.8; margin-bottom:16px;">
+            A subset of diagnosis categories remains in what this analysis terms the <strong style="color:var(--text);">backlog trap</strong> — conditions where admission volumes are still below 2018–19 levels while waiting lists have simultaneously grown beyond pre-pandemic size. This combination is not a temporary disruption; it represents a sustained mismatch between demand and delivery that worsened through the recovery period rather than resolving. The most affected categories include circulatory system disorders, HIV disease, certain infectious conditions, and injury-related categories — none of which returned to baseline by 2023–24.
+        </p>
+        <p style="font-size:15px; color:var(--text-muted); line-height:1.8; margin-bottom:32px;">
+            The multi-variable approach taken here — combining a recovery heatmap, parallel coordinates analysis, hierarchical treemap, patient profile radar chart, and correlation scatter matrix — reveals dimensions of this crisis that no single chart could expose. The backlog is not uniform across disease types, not uniform across patient age groups, and not uniform across emergency versus elective pathways. Targeted policy intervention requires exactly this level of granularity.
+        </p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div style="background:var(--bg2); border:1px solid var(--border); border-left:4px solid #f85149; border-radius:0 8px 8px 0; padding:16px 20px; flex:1; min-width:220px;">
+                <div style="font-size:11px; font-weight:700; color:#f85149; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Still Trapped</div>
+                <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0;">Multiple high-burden categories remain below 2018–19 admission levels in 2023–24 despite four years of recovery time, with waiting lists that have grown substantially above baseline.</p>
+            </div>
+            <div style="background:var(--bg2); border:1px solid var(--border); border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:16px 20px; flex:1; min-width:220px;">
+                <div style="font-size:11px; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Compounding Risk</div>
+                <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0;">Backlog-trapped categories skewing toward older patient populations carry compounded risk — delayed treatment for older patients typically leads to longer hospital stays and worse outcomes when care eventually arrives.</p>
+            </div>
+            <div style="background:var(--bg2); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:0 8px 8px 0; padding:16px 20px; flex:1; min-width:220px;">
+                <div style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Policy Implication</div>
+                <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0;">Standard throughput metrics mask these structural traps. Policymakers need simultaneous visibility of admission rates, waiting list trends, and patient demographics to identify which conditions require targeted intervention rather than general capacity increases.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <p>
+        <strong style="color:var(--text)">Mohammed Azeez</strong> ·
+        COMP4037 Research Methods CW2 ·
+        University of Nottingham 2025–26
+    </p>
+    <p>
+        Data Source:
+        <a href="https://digital.nhs.uk/data-and-information/publications/statistical/hospital-admitted-patient-care-activity" target="_blank">NHS England HES Data</a>
+    </p>
+    <p class="footer-note">
+        &#9888; This site is hosted on Render.com free tier.
+        If the page loads slowly on first visit, please wait
+        30–60 seconds for the server to wake up from idle.
+    </p>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════
+     CHART 1 — INTERACTIVE RECOVERY DASHBOARD
+═══════════════════════════════════════════════════════ -->
+<script>
+(function () {
+    // ── Data injected from Flask ──────────────────────────────────────────────
+    const DATA         = {{ chart1_data_json | safe }};
+    const CATS         = DATA.categories;
+    const YEARS        = DATA.years;           // ['2018','2019',…,'2023']
+    const YEAR_LABELS  = DATA.year_labels;     // ['2018-19',…,'2023-24']
+    const MAX_WAIT     = DATA.global_max_waiting;
+    const SUPER_GROUPS = DATA.super_groups;
+
+    // ── Filter state (exposed globally so other charts can read it) ──────────
+    const F = {
+        superGroups: new Set(SUPER_GROUPS),
+        recovery:    'all',   // 'all' | 'backlog' | 'recovered'
+        yrFrom:      0,
+        yrTo:        YEARS.length - 1,
+        ageMin:      0,
+        ageMax:      90,
+    };
+    window.NHS_FILTER = F;
+
+    // ── Color helpers ─────────────────────────────────────────────────────────
+    function h2r(hex) {
+        return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+    }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    function rgb(r,g,b){ return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+    // 5-stop ramp: deep navy → mid navy → amber → teal-green → bright teal
+    const RAMP = [
+        { at: -100, c: h2r('#0d1b2a') },
+        { at:  -45, c: h2r('#0f2d52') },
+        { at:    0, c: h2r('#c2770a') },
+        { at:   40, c: h2r('#0a8a5a') },
+        { at:  100, c: h2r('#00ff9f') },
+    ];
+
+    function pctToColor(pct) {
+        if (pct === null || pct === undefined) return 'rgb(15,22,40)';
+        const v = Math.max(-100, Math.min(100, pct));
+        for (let i = 0; i < RAMP.length - 1; i++) {
+            const a = RAMP[i], b = RAMP[i+1];
+            if (v >= a.at && v <= b.at) {
+                const t = (v - a.at) / (b.at - a.at);
+                return rgb(lerp(a.c[0],b.c[0],t), lerp(a.c[1],b.c[1],t), lerp(a.c[2],b.c[2],t));
+            }
+        }
+        return v < -100 ? rgb(...RAMP[0].c) : rgb(...RAMP[RAMP.length-1].c);
+    }
+
+    function waitToBorder(pctW) {
+        if (!pctW || pctW <= 0) return null;
+        const clamped = Math.min(Math.abs(pctW), MAX_WAIT);
+        const t = clamped / MAX_WAIT;
+        const w = 0.8 + t * 3.2;                        // 0.8px → 4px
+        const r = Math.round(lerp(160, 245, t));
+        const g = Math.round(lerp(100, 140, t * 0.4));
+        const b = Math.round(lerp(30,  11,  t));
+        return { width: w.toFixed(1), color: `rgb(${r},${g},${b})` };
+    }
+
+    // ── Sparkline SVG ─────────────────────────────────────────────────────────
+    function sparkline(cat, fromIdx, toIdx) {
+        const vals = YEARS.slice(fromIdx, toIdx + 1).map(yr => {
+            const d = cat.years[yr];
+            return d ? d.pct_change : null;
+        });
+        const valid = vals.filter(v => v !== null);
+        if (valid.length < 2) return '';
+
+        const W = 50, H = 16;
+        const mn = Math.min(...valid, -5);
+        const mx = Math.max(...valid,  5);
+        const rng = mx - mn || 1;
+        const zeroY = (H - ((0 - mn) / rng) * H).toFixed(1);
+
+        const pts = [];
+        vals.forEach((v, i) => {
+            if (v === null) return;
+            const x = (i / Math.max(vals.length - 1, 1)) * W;
+            const y = H - ((v - mn) / rng) * H;
+            pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+        });
+
+        if (pts.length < 2) return '';
+        return `<svg class="spark-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+            <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}"
+                  stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>
+            <polyline points="${pts.join(' ')}"
+                  fill="none" stroke="rgba(255,255,255,0.65)"
+                  stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>`;
+    }
+
+    // ── Build year column headers ─────────────────────────────────────────────
+    function buildHeaders() {
+        const el = document.getElementById('year-cols-header');
+        el.innerHTML = '';
+        for (let i = F.yrFrom; i <= F.yrTo; i++) {
+            const d = document.createElement('div');
+            d.className = 'yr-col-hdr';
+            d.textContent = YEAR_LABELS[i];
+            el.appendChild(d);
+        }
+    }
+
+    // ── Build full grid ───────────────────────────────────────────────────────
+    function buildGrid() {
+        const grid = document.getElementById('heatmap-grid');
+        grid.innerHTML = '';
+
+        CATS.forEach((cat, ci) => {
+            const row = document.createElement('div');
+            row.className = 'hm-row';
+            row.dataset.ci = ci;
+            row.dataset.sg = cat.super_group;
+            row.dataset.backlog = cat.backlog_trap ? '1' : '0';
+            row.dataset.score = cat.recovery_score;
+            row.dataset.age = cat.mean_age || 0;
+
+            // Row label
+            const lbl = document.createElement('div');
+            lbl.className = 'hm-row-label';
+            lbl.textContent = cat.short_name;
+            lbl.title = cat.name;
+            lbl.addEventListener('click', () => openDetail(ci));
+            row.appendChild(lbl);
+
+            // Cells
+            const cellsWrap = document.createElement('div');
+            cellsWrap.className = 'hm-cells';
+
+            for (let yi = F.yrFrom; yi <= F.yrTo; yi++) {
+                const yr = YEARS[yi];
+                const yd = cat.years[yr];
+                const cell = document.createElement('div');
+                cell.className = 'hm-cell';
+
+                const inner = document.createElement('div');
+                inner.className = 'hm-cell-inner';
+
+                if (yd) {
+                    inner.style.background = pctToColor(yd.pct_change);
+                    const border = waitToBorder(yd.pct_waiting);
+                    if (border) {
+                        inner.style.boxShadow = `inset 0 0 0 ${border.width}px ${border.color}`;
+                    }
+                    inner.innerHTML = sparkline(cat, F.yrFrom, F.yrTo);
+                    cell.addEventListener('mouseenter', e => showTip(e, cat, yr, yd, yi));
+                    cell.addEventListener('mousemove',  e => moveTip(e));
+                    cell.addEventListener('mouseleave', hideTip);
+                    cell.addEventListener('click', () => openDetail(ci));
+                } else {
+                    inner.style.background = '#0d1424';
+                    inner.style.opacity = '0.25';
+                }
+
+                cell.appendChild(inner);
+                cellsWrap.appendChild(cell);
+            }
+
+            row.appendChild(cellsWrap);
+
+            // Backlog trap indicator
+            const trapWrap = document.createElement('div');
+            trapWrap.className = 'trap-cell';
+            const dot = document.createElement('div');
+            dot.className = 'trap-dot';
+            if (cat.backlog_trap) {
+                dot.style.background = '#f59e0b';
+                dot.style.boxShadow = '0 0 5px rgba(245,158,11,0.6)';
+            } else {
+                dot.style.background = '#1e3a2a';
+            }
+            dot.title = cat.backlog_trap ? 'Backlog trapped (below baseline + waiting list grew)' : 'Not trapped';
+            trapWrap.appendChild(dot);
+            row.appendChild(trapWrap);
+
+            grid.appendChild(row);
+        });
+
+        applyFilters();
+    }
+
+    // ── Apply filters (show/hide rows) ────────────────────────────────────────
+    function applyFilters() {
+        let visible = 0;
+        document.querySelectorAll('.hm-row').forEach(row => {
+            const ci   = parseInt(row.dataset.ci);
+            const sg   = row.dataset.sg;
+            const bl   = row.dataset.backlog === '1';
+            const sc   = parseFloat(row.dataset.score);
+            const age  = parseFloat(row.dataset.age) || 0;
+            let show = true;
+            if (!F.superGroups.has(sg))                      show = false;
+            if (F.recovery === 'backlog' && !bl)             show = false;
+            if (F.recovery === 'recovered' && sc < -2)       show = false;
+            if (age > 0 && (age < F.ageMin || age > F.ageMax)) show = false;
+            row.classList.toggle('hidden', !show);
+            if (show) visible++;
+        });
+        const el = document.getElementById('visible-count');
+        if (el) el.textContent = visible;
+        // Propagate to all other charts
+        if (typeof window.applyGlobalFilters === 'function') window.applyGlobalFilters();
+    }
+
+    // ── Tooltip ───────────────────────────────────────────────────────────────
+    const TIP = document.getElementById('hm-tooltip');
+
+    function showTip(e, cat, yr, yd, yi) {
+        document.getElementById('tt-name').textContent = cat.name;
+        document.getElementById('tt-year').textContent = YEAR_LABELS[yi];
+
+        const pctEl = document.getElementById('tt-pct-change');
+        if (yd.pct_change !== null) {
+            pctEl.textContent = (yd.pct_change >= 0 ? '+' : '') + yd.pct_change.toFixed(1) + '%';
+            pctEl.style.color = yd.pct_change >= 0 ? '#34d399' : '#fb923c';
+        } else {
+            pctEl.textContent = 'No baseline';
+            pctEl.style.color = '#475569';
+        }
+
+        const wpEl = document.getElementById('tt-pct-wait');
+        if (yd.pct_waiting) {
+            wpEl.textContent = (yd.pct_waiting >= 0 ? '+' : '') + yd.pct_waiting.toFixed(1) + '%';
+            wpEl.style.color = yd.pct_waiting > 0 ? '#fbbf24' : '#34d399';
+        } else {
+            wpEl.textContent = '—';
+            wpEl.style.color = '#475569';
+        }
+
+        document.getElementById('tt-admissions').textContent =
+            yd.admissions ? yd.admissions.toLocaleString() : '—';
+
+        const trapEl = document.getElementById('tt-trap');
+        trapEl.textContent = yd.backlog_trap ? '⚠ YES' : 'No';
+        trapEl.style.color = yd.backlog_trap ? '#f59e0b' : '#34d399';
+
+        TIP.style.display = 'block';
+        moveTip(e);
+    }
+
+    function moveTip(e) {
+        const tw = TIP.offsetWidth  || 280;
+        const th = TIP.offsetHeight || 150;
+        const px = e.clientX + 18;
+        const py = e.clientY + 14;
+        TIP.style.left = ((px + tw > window.innerWidth  ? e.clientX - tw - 10 : px)) + 'px';
+        TIP.style.top  = ((py + th > window.innerHeight ? e.clientY - th - 10 : py)) + 'px';
+    }
+
+    function hideTip() { TIP.style.display = 'none'; }
+
+    // ── Detail panel ──────────────────────────────────────────────────────────
+    function openDetail(ci) {
+        const cat    = CATS[ci];
+        const panel  = document.getElementById('detail-panel');
+        const lastYD = cat.years[YEARS[YEARS.length - 1]] || {};
+
+        document.getElementById('detail-cat-name').textContent = cat.name;
+        const metaEl = document.getElementById('detail-cat-meta');
+        metaEl.innerHTML = cat.super_group +
+            (cat.backlog_trap
+                ? ' &nbsp;·&nbsp; <span class="meta-trap">&#9888; Backlog Trapped</span>'
+                : ' &nbsp;·&nbsp; Not backlog trapped');
+
+        // Build Plotly trace from full_series
+        const fsYrs = cat.full_series.map(d => d.year);
+        const fsAdm = cat.full_series.map(d => d.admissions);
+
+        const trace = {
+            x: fsYrs, y: fsAdm,
+            type: 'scatter', mode: 'lines+markers',
+            line:   { color: '#00ff9f', width: 1.8, shape: 'spline' },
+            marker: { size: 4, color: '#00ff9f' },
+            fill: 'tozeroy', fillcolor: 'rgba(0,255,159,0.05)',
+            hovertemplate: '<b>%{x}</b><br>Admissions: %{y:,.0f}<extra></extra>',
+        };
+
+        const baselineAdm = cat.full_series.find(d => d.year === 2018);
+        const baseY = baselineAdm ? baselineAdm.admissions : null;
+
+        const shapes = [
+            { type:'rect', xref:'x', yref:'paper',
+              x0:2019.5, x1:2021.5, y0:0, y1:1,
+              fillcolor:'rgba(248,81,73,0.07)', line:{width:0} },
+        ];
+        if (baseY) {
+            shapes.push({
+                type:'line', xref:'paper', yref:'y',
+                x0:0, x1:1, y0:baseY, y1:baseY,
+                line:{ color:'rgba(0,255,159,0.2)', width:1, dash:'dot' }
+            });
+        }
+
+        const layout = {
+            plot_bgcolor:  '#0d1424',
+            paper_bgcolor: '#0d1424',
+            font: { color:'#64748b', size:10, family:'Inter,sans-serif' },
+            margin: { t:8, r:8, b:36, l:54 },
+            height: 195,
+            xaxis: { gridcolor:'#1e2d4a', color:'#475569', tickformat:'d' },
+            yaxis: { gridcolor:'#1e2d4a', color:'#475569',
+                     title:'Admissions', titlefont:{size:9} },
+            shapes: shapes,
+            annotations: [
+                { x:2020.5, y:1, xref:'x', yref:'paper',
+                  text:'COVID', showarrow:false,
+                  font:{size:9, color:'#f87171'}, yanchor:'top' }
+            ],
+            showlegend: false,
+        };
+
+        // Get the wrapper's current dimensions
+        const wrap = document.getElementById('detail-plotly-wrap');
+        layout.height = Math.max(150, wrap.clientHeight - 4);
+
+        Plotly.newPlot('detail-plotly', [trace], layout,
+            { displayModeBar:false, responsive:true });
+
+        // Stat boxes
+        const pct = lastYD.pct_change;
+        const wp  = lastYD.pct_waiting;
+        document.getElementById('detail-stats-grid').innerHTML = `
+            <div class="detail-stat-box">
+                <span class="detail-stat-label">Recovery 2023-24</span>
+                <span class="detail-stat-value" style="color:${pct>=0?'#34d399':'#fb923c'}">
+                    ${pct!==null&&pct!==undefined?(pct>=0?'+':'')+pct.toFixed(1)+'%':'—'}
+                </span>
+            </div>
+            <div class="detail-stat-box">
+                <span class="detail-stat-label">Waiting list Δ</span>
+                <span class="detail-stat-value" style="color:${wp>0?'#fbbf24':'#34d399'}">
+                    ${wp?(wp>=0?'+':'')+wp.toFixed(1)+'%':'—'}
+                </span>
+            </div>
+            <div class="detail-stat-box">
+                <span class="detail-stat-label">Admissions</span>
+                <span class="detail-stat-value">
+                    ${(lastYD.admissions||0).toLocaleString()}
+                </span>
+            </div>
+            <div class="detail-stat-box">
+                <span class="detail-stat-label">Mean age</span>
+                <span class="detail-stat-value">
+                    ${cat.mean_age ? cat.mean_age.toFixed(0) + ' yrs' : '—'}
+                </span>
+            </div>`;
+
+        panel.classList.add('open');
+    }
+
+    document.getElementById('detail-close').addEventListener('click', () => {
+        document.getElementById('detail-panel').classList.remove('open');
+    });
+
+    // ── Super-group checkboxes ────────────────────────────────────────────────
+    const sgBox = document.getElementById('sg-checkboxes');
+    SUPER_GROUPS.forEach(sg => {
+        const lbl = document.createElement('label');
+        lbl.className = 'filter-option';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.checked = true; cb.value = sg;
+        const sp = document.createElement('span');
+        sp.textContent = sg.length > 22 ? sg.slice(0,21) + '…' : sg;
+        sp.title = sg;
+        cb.addEventListener('change', () => {
+            cb.checked ? F.superGroups.add(sg) : F.superGroups.delete(sg);
+            applyFilters();
+        });
+        lbl.appendChild(cb); lbl.appendChild(sp);
+        sgBox.appendChild(lbl);
+    });
+
+    // ── Recovery radio ────────────────────────────────────────────────────────
+    document.querySelectorAll('input[name="rec-filter"]').forEach(r => {
+        r.addEventListener('change', () => { F.recovery = r.value; applyFilters(); });
+    });
+
+    // ── Year range sliders ────────────────────────────────────────────────────
+    const yrFrom = document.getElementById('yr-from');
+    const yrTo   = document.getElementById('yr-to');
+    const yrFLbl = document.getElementById('yr-from-lbl');
+    const yrTLbl = document.getElementById('yr-to-lbl');
+
+    function syncYrRange() {
+        let lo = parseInt(yrFrom.value), hi = parseInt(yrTo.value);
+        if (lo > hi) { lo = hi; yrFrom.value = lo; }
+        F.yrFrom = lo; F.yrTo = hi;
+        yrFLbl.textContent = YEAR_LABELS[lo];
+        yrTLbl.textContent = YEAR_LABELS[hi];
+        buildHeaders();
+        buildGrid();
+    }
+    yrFrom.addEventListener('input', syncYrRange);
+    yrTo.addEventListener('input',   syncYrRange);
+
+    // ── Age range sliders ─────────────────────────────────────────────────────
+    const ageMin = document.getElementById('age-min');
+    const ageMax = document.getElementById('age-max');
+    const ageMinLbl = document.getElementById('age-min-lbl');
+    const ageMaxLbl = document.getElementById('age-max-lbl');
+    function syncAgeRange() {
+        let lo = parseInt(ageMin.value), hi = parseInt(ageMax.value);
+        if (lo > hi) { lo = hi; ageMin.value = lo; }
+        F.ageMin = lo; F.ageMax = hi;
+        ageMinLbl.textContent = lo + ' yrs';
+        ageMaxLbl.textContent = hi >= 90 ? '90+ yrs' : hi + ' yrs';
+        applyFilters();
+    }
+    ageMin.addEventListener('input', syncAgeRange);
+    ageMax.addEventListener('input', syncAgeRange);
+
+    // ── Sidebar toggle ────────────────────────────────────────────────────────
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        const sb  = document.getElementById('filters-sidebar');
+        const btn = document.getElementById('sidebar-toggle');
+        sb.classList.toggle('collapsed');
+        btn.innerHTML = sb.classList.contains('collapsed') ? '&#x276D;' : '&#x276C;';
+    });
+
+    // ── Reset ─────────────────────────────────────────────────────────────────
+    document.getElementById('reset-filters').addEventListener('click', () => {
+        F.superGroups = new Set(SUPER_GROUPS);
+        document.querySelectorAll('#sg-checkboxes input').forEach(cb => cb.checked = true);
+        F.recovery = 'all';
+        document.querySelector('input[name="rec-filter"][value="all"]').checked = true;
+        F.yrFrom = 0; F.yrTo = YEARS.length - 1;
+        yrFrom.value = 0; yrTo.value = YEARS.length - 1;
+        yrFLbl.textContent = YEAR_LABELS[0];
+        yrTLbl.textContent = YEAR_LABELS[YEARS.length - 1];
+        F.ageMin = 0; F.ageMax = 90;
+        ageMin.value = 0; ageMax.value = 90;
+        ageMinLbl.textContent = '0 yrs';
+        ageMaxLbl.textContent = '90+ yrs';
+        buildHeaders();
+        buildGrid();
+    });
+
+    // ── Download PNG ──────────────────────────────────────────────────────────
+    document.getElementById('download-btn').addEventListener('click', () => {
+        const btn       = document.getElementById('download-btn');
+        const dashboard = document.getElementById('recovery-dashboard');
+        const origText  = btn.textContent;
+
+        btn.textContent = 'Rendering…';
+        btn.disabled    = true;
+
+        // Hide tooltip so it doesn't appear in the export
+        TIP.style.display = 'none';
+
+        html2canvas(dashboard, {
+            backgroundColor: '#0a0f1e',
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            // Capture the full scrollable grid, not just visible viewport
+            scrollX: 0,
+            scrollY: -window.scrollY,
+        }).then(canvas => {
+            const a = document.createElement('a');
+            a.download = 'nhs-recovery-dashboard.png';
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+        }).catch(err => {
+            console.error('Export failed:', err);
+        }).finally(() => {
+            btn.textContent = origText;
+            btn.disabled    = false;
+        });
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    buildHeaders();
+    buildGrid();
+
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GLOBAL FILTER → ALL CHARTS  +  SUPPLEMENTARY CHARTS
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+
+// ── Shared constants ──────────────────────────────────────────────────────────
+window.ALL_CATS   = {{ all_cats_json | safe }};
+const SG_COLORS   = window.ALL_CATS.sg_colors;
+const RSCALE      = [[0,'#0d1b2a'],[0.3,'#0f2d52'],[0.5,'#c2770a'],[0.75,'#0a8a5a'],[1,'#00ff9f']];
+const RSCALE_LIGHT= [[0,'#ef4444'],[0.45,'#f97316'],[0.5,'#d97706'],[0.65,'#16a34a'],[1,'#15803d']];
+
+function getChartTheme() {
+    const light = document.body.classList.contains('light-mode');
+    return {
+        plot_bgcolor:  light ? '#f8fafc' : '#0d1117',
+        paper_bgcolor: light ? '#ffffff' : '#0d1117',
+        font: { color: light ? '#1f2328' : 'white', size: 11, family: 'Inter,sans-serif' },
+    };
+}
+function getCurrentRscale() {
+    return document.body.classList.contains('light-mode') ? RSCALE_LIGHT : RSCALE;
+}
+const RADAR_COLS  = ['#00ff9f','#3b82f6','#a855f7','#f59e0b','#10b981','#ef4444','#f97316','#06b6d4'];
+
+// ── Helper: replace a chart container with a fresh div ────────────────────────
+function slot(containerId, slotId) {
+    const c = document.getElementById(containerId);
+    if (!c) return null;
+    let d = document.getElementById(slotId);
+    if (!d) {
+        d = document.createElement('div');
+        d.id    = slotId;
+        d.style.cssText = 'width:100%;height:100%;';
+        c.innerHTML = '';
+        c.appendChild(d);
+    }
+    return slotId;
+}
+
+// ── Filter helper ─────────────────────────────────────────────────────────────
+function filteredCats() {
+    const F  = window.NHS_FILTER || {};
+    const sg = F.superGroups || new Set(window.ALL_CATS.super_groups);
+    const rv = F.recovery || 'all';
+    const ageMin = F.ageMin !== undefined ? F.ageMin : 0;
+    const ageMax = F.ageMax !== undefined ? F.ageMax : 90;
+    return window.ALL_CATS.cats.filter(c => {
+        if (!sg.has(c.super_group))                   return false;
+        if (rv === 'backlog'    && !c.backlog_trap)   return false;
+        if (rv === 'recovered'  && c.recovery_score < -2) return false;
+        const age = c.mean_age || 0;
+        if (age > 0 && (age < ageMin || age > ageMax)) return false;
+        return true;
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHART 2 — Parallel Coordinates (filter-driven rebuild)
+// ══════════════════════════════════════════════════════════════════════════════
+function updateChart2(cats) {
+    const data = cats.filter(c => c.pct_change_admissions !== null).slice(0, 50);
+    if (!data.length) return;
+
+    function norm(arr) {
+        const mn = Math.min(...arr), mx = Math.max(...arr), r = mx - mn || 1;
+        return arr.map(v => (v - mn) / r);
+    }
+    const keys  = ['pct_change_admissions','pct_change_waiting','emergency','mean_los_days','mean_age'];
+    const lbls  = ['Admissions % vs Baseline','Waiting List % vs Baseline','Emergency Admissions','Mean LOS (days)','Mean Age'];
+    const dims  = keys.map((k, i) => ({
+        label: lbls[i], values: norm(data.map(c => c[k] ?? 0)), range:[0,1]
+    }));
+
+    const id = slot('chart2-container','c2-plot');
+    if (!id) return;
+    Plotly.react(id, [{
+        type: 'parcoords',
+        line: {
+            color: data.map(c => c.pct_change_admissions),
+            colorscale: getCurrentRscale(), cmin:-80, cmax:80,
+            showscale: true,
+            colorbar: { title:{ text:'Admissions % Change', side:'right' } }
+        },
+        dimensions: dims,
+    }], {
+        ...getChartTheme(),
+        title: { text: 'Parallel Coordinates: Multi-Metric Profile of NHS Diagnosis Categories (2023-24)'
+                     + '<br><sub>Each line = one diagnosis category | Color = admissions recovery</sub>',
+                 font:{size:13} },
+        height: 650,
+        margin: { t: 100, r: 80, b: 40, l: 80 },
+    }, { displayModeBar:true, displaylogo:false, responsive:true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHART 3 — Treemap (filter-driven rebuild)
+// ══════════════════════════════════════════════════════════════════════════════
+function updateChart3(cats) {
+    const data = cats.filter(c => c.admissions > 0);
+    if (!data.length) return;
+
+    const ids=['root'], labels=['NHS 2023-24'], parents=[''], vals=[0], colors=[null];
+    const sgs = [...new Set(data.map(c => c.super_group))];
+    const sgSum = {};
+    data.forEach(c => { sgSum[c.super_group] = (sgSum[c.super_group]||0) + c.admissions; });
+
+    sgs.forEach(sg => {
+        ids.push(sg); labels.push(sg); parents.push('root');
+        vals.push(sgSum[sg]); colors.push(null);
+    });
+    data.forEach(c => {
+        ids.push(c.name); labels.push(c.short_name); parents.push(c.super_group);
+        vals.push(c.admissions); colors.push(c.pct_change_admissions ?? 0);
+    });
+    vals[0] = Object.values(sgSum).reduce((a,b)=>a+b,0);
+
+    const id = slot('chart3-container','c3-plot');
+    if (!id) return;
+    Plotly.react(id, [{
+        type:'treemap', ids, labels, parents, values:vals, branchvalues:'total',
+        marker: {
+            colors, colorscale:RSCALE, cmid:0, cmin:-80, cmax:80,
+            colorbar:{ title:'% Change', tickformat:'.0f', ticksuffix:'%' }
+        },
+        hovertemplate:'<b>%{label}</b><br>Admissions: %{value:,.0f}<extra></extra>',
+    }], {
+        ...getChartTheme(),
+        title:{ text:'Treemap: NHS Hospital Admissions Volume and Post-Pandemic Recovery (2023-24)'
+                    +'<br><sub>Size = admissions volume | Color = % change from 2018-19 baseline</sub>',
+                font:{size:13} },
+        height:750,
+        margin: { t: 100, r: 20, b: 20, l: 20 },
+        coloraxis_colorbar:{ title:'% Change vs 2018-19', tickformat:'.0f', ticksuffix:'%' },
+    }, { displayModeBar:false, responsive:true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHART 4 — Radar (filter-driven rebuild)
+// ══════════════════════════════════════════════════════════════════════════════
+function updateChart4(cats) {
+    const top8 = cats.slice(0, 8);
+    if (!top8.length) return;
+
+    const mkeys = ['admissions','emergency_rate','waiting_list','mean_los_days','mean_age'];
+    const mlbls = ['Admissions Volume','Emergency Rate %','Waiting List Size','Avg Length of Stay','Patient Age (Mean)'];
+
+    const normCols = mkeys.map(k => {
+        const arr = top8.map(c => c[k]||0);
+        const mn=Math.min(...arr), mx=Math.max(...arr), r=mx-mn||1;
+        return arr.map(v => ((v-mn)/r)*100);
+    });
+
+    const traces = top8.map((cat, i) => {
+        const vals = mkeys.map((_,mi) => normCols[mi][i]);
+        return {
+            type:'scatterpolar', fill:'toself', opacity:0.7,
+            r:[...vals, vals[0]], theta:[...mlbls, mlbls[0]],
+            name: cat.short_name.slice(0,25),
+            line:{ color: RADAR_COLS[i % RADAR_COLS.length] }
+        };
+    });
+
+    const id = slot('chart4-container','c4-plot');
+    if (!id) return;
+    Plotly.react(id, traces, {
+        ...getChartTheme(),
+        title:{ text:'Radar Chart: Multi-Metric Profile of Top 8 NHS Diagnosis Categories (2023-24)'
+                    +'<br><sub>All metrics normalized 0-100 | Larger area = higher relative burden</sub>',
+                font:{size:13} },
+        polar:{
+            radialaxis:{ visible:true, range:[0,100], gridcolor:'#444', color:'white' },
+            angularaxis:{ gridcolor:'#444', color:'white' },
+            bgcolor:'#0d1117'
+        },
+        showlegend:true, legend:{x:1.05, y:1, font:{color:'white'}},
+        height:650,
+        margin: { t: 110, r: 20, b: 20, l: 20 },
+    }, { displayModeBar:false, responsive:true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHART 5 — Scatter Matrix (filter-driven rebuild)
+// ══════════════════════════════════════════════════════════════════════════════
+function updateChart5(cats) {
+    const data = cats.slice(0,60);
+    if (!data.length) return;
+
+    const dims = [
+        {label:'Total Admissions',    values:data.map(c=>c.admissions)},
+        {label:'Emergency Admissions',values:data.map(c=>c.emergency)},
+        {label:'Waiting List',        values:data.map(c=>c.waiting_list)},
+        {label:'Avg Stay (Days)',      values:data.map(c=>c.mean_los_days)},
+        {label:'Mean Age',             values:data.map(c=>c.mean_age)},
+    ];
+
+    const id = slot('chart5-container','c5-plot');
+    if (!id) return;
+    Plotly.react(id, [{
+        type:'splom', dimensions:dims,
+        showupperhalf:false, diagonal:{visible:false},
+        marker:{
+            color: data.map(c => SG_COLORS[c.super_group]||'#94a3b8'),
+            size:7, opacity:0.75, line:{width:0.5, color:'#333'}
+        },
+        text: data.map(c=>c.short_name),
+        hovertemplate:'<b>%{text}</b><extra></extra>',
+    }], {
+        ...getChartTheme(),
+        title:{ text:'Scatterplot Matrix: Pairwise Relationships Between NHS Admissions Metrics (2023-24)'
+                    +'<br><sub>Each cell = one metric vs another | Color = disease category group</sub>',
+                font:{size:13} },
+        height:800,
+        margin: { t: 100, r: 20, b: 20, l: 20 },
+    }, { displayModeBar:false, responsive:true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUPPLEMENTARY CHART S1 — Backlog Quadrant
+// ══════════════════════════════════════════════════════════════════════════════
+function buildS1(cats) {
+    const data = cats.filter(c => c.pct_change_admissions !== null && c.pct_change_waiting !== null);
+    if (!data.length) return;
+
+    // Clip y at 95th pct to avoid +536% outliers collapsing the scale
+    const yvals = data.map(c=>c.pct_change_waiting).sort((a,b)=>a-b);
+    const yMax  = Math.min(yvals[Math.floor(yvals.length*0.95)] + 20, 200);
+    const yMin  = Math.max(Math.min(...yvals)-10, -120);
+
+    const sgs = [...new Set(data.map(c=>c.super_group))];
+    const traces = sgs.map(sg => {
+        const d = data.filter(c=>c.super_group===sg);
+        return {
+            type:'scatter', mode:'markers+text',
+            x: d.map(c=>c.pct_change_admissions),
+            y: d.map(c=>Math.min(c.pct_change_waiting, yMax)),
+            marker:{
+                size: d.map(c=>Math.max(7, Math.sqrt(c.admissions/15000)+6)),
+                color: SG_COLORS[sg]||'#94a3b8', opacity:0.82,
+                line:{width:0.5, color:'rgba(0,0,0,0.3)'}
+            },
+            text: d.map(c => ''),
+            textposition: 'top center',
+            textfont: { size: 9, color: '#fbbf24' },
+            name: sg,
+            customdata: d.map(c=>[c.name, c.pct_change_admissions, c.pct_change_waiting, c.backlog_trap]),
+            hovertemplate: '<b>%{customdata[0]}</b><br>'
+                         + 'Admissions: %{customdata[1]:+.1f}%<br>'
+                         + 'Waiting list: %{customdata[2]:+.1f}%<br>'
+                         + '%{customdata[3]}<extra></extra>',
+        };
+    });
+
+    const allData = data.filter(c => c.backlog_trap && c.pct_change_admissions !== null)
+        .sort((a, b) => a.pct_change_admissions - b.pct_change_admissions)
+        .slice(0, 5);
+
+    const labelAnnotations = allData.map(c => ({
+        x: c.pct_change_admissions,
+        y: Math.min(c.pct_change_waiting, yMax),
+        xref: 'x', yref: 'y',
+        text: c.short_name.slice(0, 22),
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 0.8,
+        arrowcolor: 'rgba(251,191,36,0.5)',
+        ax: 40, ay: -30,
+        font: { size: 9, color: '#fbbf24' },
+        bgcolor: 'rgba(17,24,39,0.85)',
+        bordercolor: 'rgba(251,191,36,0.3)',
+        borderwidth: 1,
+        borderpad: 3,
+    }));
+
+    Plotly.react('supp1-div', traces, {
+        ...getChartTheme(),
+        title: { text: '<b>Backlog Quadrant: Admissions Change vs Waiting List Change (2023-24)</b>'
+                     + '<br><sub>Top-left quadrant = backlog trap (fewer treated, more waiting) | Point size = admissions volume</sub>',
+                 font: { size: 14 } },
+        xaxis: { title: 'Admissions % change vs 2018-19', gridcolor: '#1e2d4a', zeroline: false, color: '#64748b' },
+        yaxis: { title: 'Waiting list % change vs 2018-19', gridcolor: '#1e2d4a', zeroline: false,
+                 color: '#64748b', range: [yMin, yMax] },
+        shapes: [
+            { type: 'rect', xref: 'x', yref: 'paper', x0: -200, x1: 0, y0: 0, y1: 1,
+              fillcolor: 'rgba(239,68,68,0.06)', line: { width: 0 } },
+            { type: 'line', xref: 'x', yref: 'paper', x0: 0, x1: 0, y0: 0, y1: 1,
+              line: { color: 'rgba(255,255,255,0.12)', width: 1, dash: 'dot' } },
+            { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0, y1: 0,
+              line: { color: 'rgba(255,255,255,0.12)', width: 1, dash: 'dot' } },
+        ],
+        annotations: [
+            { x: 0.02, y: 0.98, xref: 'paper', yref: 'paper',
+              text: '&#9888; BACKLOG TRAP', showarrow: false,
+              font: { size: 10, color: 'rgba(239,68,68,0.55)' }, xanchor: 'left', yanchor: 'top' },
+            { x: 0.98, y: 0.02, xref: 'paper', yref: 'paper',
+              text: 'RECOVERED', showarrow: false,
+              font: { size: 10, color: 'rgba(0,255,159,0.4)' }, xanchor: 'right', yanchor: 'bottom' },
+            ...labelAnnotations,
+        ],
+        legend: { x: 1.01, y: 1, font: { color: 'white', size: 10 } },
+        height: 580, hovermode: 'closest',
+        margin: { t: 100, r: 160, b: 60, l: 60 },
+    }, { displayModeBar: false, responsive: true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUPPLEMENTARY CHART S3 — Patient Age vs Recovery (who suffers most)
+// ══════════════════════════════════════════════════════════════════════════════
+function buildS3(cats) {
+    const data = cats.filter(c =>
+        c.pct_change_admissions !== null &&
+        c.pct_change_admissions !== undefined &&
+        c.mean_age > 5 &&
+        Math.abs(c.pct_change_admissions) > 0.1
+    );
+    if (!data.length) return;
+
+    const trapped   = data.filter(c => c.backlog_trap);
+    const recovered = data.filter(c => !c.backlog_trap && (c.pct_change_admissions || 0) >= 0);
+    const declining = data.filter(c => !c.backlog_trap && (c.pct_change_admissions || 0) < 0);
+
+    function makeTrace(arr, name, color, symbol) {
+        if (!arr.length) return null;
+        return {
+            type: 'scatter', mode: 'markers', name,
+            x: arr.map(c => c.mean_age),
+            y: arr.map(c => c.pct_change_admissions),
+            marker: {
+                color, symbol, opacity: 0.85,
+                size: arr.map(c => Math.max(8, Math.sqrt(c.admissions / 10000) + 6)),
+                line: { width: 0.5, color: 'rgba(0,0,0,0.3)' }
+            },
+            text: arr.map(c => c.short_name),
+            customdata: arr.map(c => [c.name, c.mean_age, c.pct_change_admissions, c.admissions]),
+            hovertemplate: '<b>%{customdata[0]}</b><br>'
+                         + 'Mean patient age: %{customdata[1]:.1f} yrs<br>'
+                         + 'Recovery: %{customdata[2]:+.1f}%<br>'
+                         + 'Admissions: %{customdata[3]:,.0f}<extra></extra>',
+        };
+    }
+
+    const traces = [
+        makeTrace(trapped,   'Backlog Trapped',      '#f59e0b', 'diamond'),
+        makeTrace(declining, 'Below Baseline',        '#3b82f6', 'circle'),
+        makeTrace(recovered, 'Recovered / Exceeded',  '#00ff9f', 'circle'),
+    ].filter(t => t !== null);
+
+    const allY = data.map(c => c.pct_change_admissions);
+    const yPad = 15;
+    const yMin = Math.max(Math.min(...allY) - yPad, -150);
+    const yMax = Math.min(Math.max(...allY) + yPad, 150);
+
+    Plotly.react('supp3-div', traces, {
+        ...getChartTheme(),
+        title: {
+            text: '<b>Patient Age vs Admissions Recovery (2023-24)</b>'
+                + '<br><sub>x = mean patient age | y = % admissions change vs 2018-19 | Point size = admissions volume</sub>',
+            font: { size: 14 }
+        },
+        xaxis: {
+            title: 'Mean patient age (years)',
+            gridcolor: '#1e2d4a', zeroline: false, color: '#64748b',
+            range: [0, 95]
+        },
+        yaxis: {
+            title: 'Admissions % change vs 2018-19 baseline',
+            gridcolor: '#1e2d4a', zeroline: true, zerolinecolor: 'rgba(255,255,255,0.15)',
+            zerolinewidth: 1, color: '#64748b',
+            range: [yMin, yMax]
+        },
+        shapes: [{
+            type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0, y1: 0,
+            line: { color: 'rgba(255,255,255,0.18)', width: 1, dash: 'dot' }
+        }],
+        legend: { x: 1.01, y: 1, font: { color: 'white', size: 10 } },
+        height: 520, hovermode: 'closest',
+        margin: { t: 100, r: 160, b: 60, l: 80 },
+    }, { displayModeBar: false, responsive: true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GLOBAL FILTER ENTRY POINT (called by Chart 1 on every filter change)
+// ══════════════════════════════════════════════════════════════════════════════
+window.applyGlobalFilters = function () {
+    const cats = filteredCats();
+    updateChart2(cats);
+    updateChart3(cats);
+    updateChart4(cats);
+    updateChart5(cats);
+    buildS1(cats);
+    buildS3(cats);
+};
+
+// ── Initial render — ALL charts built from JS on page load ────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const cats = filteredCats();
+    // Charts 2-5 (now JS-driven from the start — fully responsive to filters)
+    updateChart2(cats);
+    updateChart3(cats);
+    updateChart4(cats);
+    updateChart5(cats);
+    // Supplementary
+    buildS1(cats);
+    buildS3(cats);
+});
+
+})();
+</script>
+
+<!-- SMOOTH SCROLL + ACTIVE NAV JAVASCRIPT -->
+<script>
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+    anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            var offset = 70;
+            var top = target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+    });
+});
+
+// Highlight active nav link on scroll
+var sections = document.querySelectorAll('.chart-section');
+var navLinks = document.querySelectorAll('.nav-links a');
+
+var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+            navLinks.forEach(function(link) {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + entry.target.id) {
+                    link.classList.add('active');
+                }
+            });
+        }
+    });
+}, { threshold: 0.3, rootMargin: '-60px 0px 0px 0px' });
+
+sections.forEach(function(s) { observer.observe(s); });
+</script>
+
+<script>
+(function() {
+    var btn = document.getElementById('theme-toggle');
+    var dark = true;
+    btn.addEventListener('click', function() {
+        dark = !dark;
+        document.body.classList.toggle('light-mode', !dark);
+        btn.textContent = dark ? '\u2600 Light' : '\u263D Dark';
+        if (typeof window.applyGlobalFilters === 'function') {
+            window.applyGlobalFilters();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

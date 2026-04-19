@@ -1,0 +1,28 @@
+# Raw NHS data files — large, processed locally only
+*.xls
+*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / tooling
+.claude/
+.vscode/
+.idea/
+
+# Project planning notes
+project-breakdown.md
+
+# PDF reference files
+NHS\ Hospital\ Admissions/*.pdf
