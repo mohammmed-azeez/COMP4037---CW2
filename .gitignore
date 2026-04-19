@@ -16,13 +16,4 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Editor / tooling
-.claude/
-.vscode/
-.idea/
 
-# Project planning notes
-project-breakdown.md
-
-# PDF reference files
-NHS\ Hospital\ Admissions/*.pdf
