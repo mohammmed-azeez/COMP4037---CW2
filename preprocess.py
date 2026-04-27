@@ -10,12 +10,10 @@ import glob
 import pandas as pd
 import numpy as np
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.join(os.path.dirname(__file__), "NHS Hospital Admissions")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "static")
 OUTPUT_CSV = os.path.join(OUTPUT_DIR, "nhs_merged.csv")
 
-# ── Skip-row map ───────────────────────────────────────────────────────────────
 def skiprows_for_year(year: int) -> int:
     if 1998 <= year <= 2004: return 3
     if 2005 <= year <= 2006: return 10
@@ -28,10 +26,8 @@ def skiprows_for_year(year: int) -> int:
     if year == 2023:         return 0
     raise ValueError(f"No skiprow mapping for year {year}")
 
-# ── Regex for splitting merged code+description ────────────────────────────────
 CODE_RE = re.compile(r'^([A-Z]\d{2}(?:-[A-Z]?\d{2,3})?(?:\+)?)\s+(.+)$')
 
-# ── Helper: find first column whose header matches a substring ─────────────────
 def find_col(cols, *substrings, case=False):
     """Return name of first column matching ANY of the substrings (case-insensitive by default)."""
     for col in cols:
@@ -42,13 +38,11 @@ def find_col(cols, *substrings, case=False):
                 return col
     return None
 
-# ── Numeric cleaner ────────────────────────────────────────────────────────────
 def to_numeric(series: pd.Series) -> pd.Series:
     s = series.astype(str).str.replace(',', '', regex=False).str.strip()
     s = s.replace(['*', '-', 'c', 'nan', 'NaN', 'None', ''], np.nan)
     return pd.to_numeric(s, errors='coerce').fillna(0)
 
-# ── Read & normalise one file ──────────────────────────────────────────────────
 def read_file(filepath: str, year: int) -> pd.DataFrame:
     skip = skiprows_for_year(year)
     is_old = year <= 2011
@@ -72,7 +66,6 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
     # Strip \n from ALL column names, then strip whitespace
     df.columns = [str(c).replace('\n', ' ').strip() for c in df.columns]
 
-    # ── Drop blank / Total rows ────────────────────────────────────────────────
     # First column (index 0) is always the code/merged column
     first_col = df.columns[0]
     df = df.dropna(subset=[first_col])
@@ -81,7 +74,6 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
 
     cols = list(df.columns)
 
-    # ── Extract code & description ─────────────────────────────────────────────
     if is_old:
         # Code and description merged in first column
         raw = df[first_col].astype(str).str.strip()
@@ -108,11 +100,9 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
             # Fallback: description in second column
             df['diagnosis_desc'] = df[cols[1]].astype(str).str.strip()
 
-    # ── FCE ───────────────────────────────────────────────────────────────────
     fce_col = find_col(cols, 'finished consultant')
     df['fce'] = to_numeric(df[fce_col]) if fce_col else 0
 
-    # ── Admissions ────────────────────────────────────────────────────────────
     if is_old and year <= 2004:
         # No separate admissions column — use FCE
         df['admissions'] = df['fce']
@@ -120,15 +110,15 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
         adm_col = find_col(cols, 'finished admission', 'admissions')
         df['admissions'] = to_numeric(df[adm_col]) if adm_col else df['fce']
 
-    # ── Emergency ─────────────────────────────────────────────────────────────
+    
     emg_col = find_col(cols, 'emergency')
     df['emergency'] = to_numeric(df[emg_col]) if emg_col else 0
 
-    # ── Waiting list ──────────────────────────────────────────────────────────
+    
     wl_col = find_col(cols, 'waiting list', 'waiting')
     df['waiting_list'] = to_numeric(df[wl_col]) if wl_col else 0
 
-    # ── Mean length of stay ───────────────────────────────────────────────────
+    
     los_col = find_col(cols, 'length of stay')
     # Prefer "mean" over "median" — find explicitly
     if los_col:
@@ -136,16 +126,16 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
         los_col = mean_los_col if mean_los_col else los_col
     df['mean_los_days'] = to_numeric(df[los_col]) if los_col else 0
 
-    # ── Mean age ──────────────────────────────────────────────────────────────
+    
     age_col = find_col(cols, 'mean age')
     df['mean_age'] = to_numeric(df[age_col]) if age_col else 0
 
     df['year'] = year
 
-    # ── Strip trailing whitespace from string columns ─────────────────────────
+    
     df['diagnosis_desc'] = df['diagnosis_desc'].str.strip()
 
-    # ── Filter to summary-level ICD codes only ────────────────────────────────
+    
     # Keep codes that are a range (contain hyphen) or a single letter
     code = df['diagnosis_code'].astype(str).str.strip()
     is_range  = code.str.contains('-', na=False)
@@ -156,7 +146,7 @@ def read_file(filepath: str, year: int) -> pd.DataFrame:
                'emergency', 'waiting_list', 'mean_los_days', 'mean_age', 'year']]
 
 
-# ── Collect file list ─────────────────────────────────────────────────────────
+
 def collect_files():
     """Returns list of (filepath, year) tuples."""
     files = []
@@ -197,7 +187,7 @@ def collect_files():
     return files
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -229,7 +219,7 @@ def main():
     merged = pd.concat(all_frames, ignore_index=True)
     print(f"\nMerged shape before metrics: {merged.shape}")
 
-    # ── Baseline (year 2018) ──────────────────────────────────────────────────
+    
     baseline = (
         merged[merged['year'] == 2018]
         [['diagnosis_desc', 'admissions', 'waiting_list']]
@@ -239,7 +229,7 @@ def main():
 
     merged = merged.merge(baseline, on='diagnosis_desc', how='left')
 
-    # ── Percentage changes ────────────────────────────────────────────────────
+    
     merged['pct_change_admissions'] = np.where(
         (merged['baseline_admissions'].isna()) | (merged['baseline_admissions'] == 0),
         np.nan,
@@ -252,18 +242,15 @@ def main():
         ((merged['waiting_list'] - merged['baseline_waiting']) / merged['baseline_waiting']) * 100
     )
 
-    # ── Backlog trap flag ─────────────────────────────────────────────────────
     merged['backlog_trap'] = (
         merged['year'].isin([2022, 2023]) &
         (merged['pct_change_admissions'] < -5) &
         (merged['pct_change_waiting'] > 5)
     )
 
-    # ── Save ──────────────────────────────────────────────────────────────────
     merged.to_csv(OUTPUT_CSV, index=False)
     print(f"\nSaved → {OUTPUT_CSV}")
 
-    # ── Summary report ────────────────────────────────────────────────────────
     print("\n" + "="*60)
     print("SUMMARY REPORT")
     print("="*60)
